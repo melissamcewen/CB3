@@ -1,7 +1,6 @@
-import { Analyzer } from 'haircare-ingredients-analyzer';
+import { Analyzer, AnalysisResult, AnalyzerConfig } from '@/lib/curlsbot-api';
 import { ingredients } from './data/ingredients';
 import { categories } from './data/categories';
-import { AnalysisResult } from 'haircare-ingredients-analyzer';
 import { mockProducts } from './data/products/mockData';
 import { Product } from './types';
 
@@ -17,45 +16,23 @@ export function analyzeIngredients(
   ingredientList: string,
   filters: FilterOptions
 ): AnalysisResult {
+  console.log('Starting analysis with ingredients database:', Object.keys(ingredients).length);
+
   const analyzer = new Analyzer({
     database: {
       ingredients,
       categories
+    },
+    config: {
+      minConfidence: 1,
+      fuzzyMatch: true
     }
-  });
+  } as AnalyzerConfig);
 
   const results = analyzer.analyzeIngredients(ingredientList);
+  console.log('Analysis results:', results);
 
-  const filteredMatches = results.matches.map(match => {
-    if (!match.categories) {
-      match.categories = [];
-    }
-
-    // Map category names from the analyzer to our filter categories
-    const categoryMap = {
-      'sulfate': 'sulfate',
-      'non-soluble silicone': 'non-soluble silicone',
-      'water-soluble silicone': 'water-soluble silicone',
-      'drying alcohol': 'drying alcohol',
-      'non-soluble wax': 'non-soluble wax'
-    } as const;
-
-    // Ensure categories match our filter names
-    Object.entries(categoryMap).forEach(([category, mappedCategory]) => {
-      if (match.categories?.includes(category) && !match.categories.includes(mappedCategory)) {
-        match.categories.push(mappedCategory);
-      }
-    });
-
-    return match;
-  });
-
-  return {
-    ...results,
-    matches: filteredMatches
-  };
+  return results;
 }
 
-function getRecommendations(analysisResults: AnalysisResult[]): Product[] {
-  return mockProducts.sort(() => Math.random() - 0.5).slice(0, 2);
-}
+

@@ -1,5 +1,5 @@
 import { AlertTriangle, AlertCircle, Search } from 'lucide-react';
-import { IngredientMatch } from 'haircare-ingredients-analyzer';
+import { IngredientMatch } from '@/lib/curlsbot-api';
 import { FilterOptions } from '@/lib/types';
 import { filterCategories } from '@/lib/config/categories';
 
@@ -9,6 +9,33 @@ interface IngredientCardProps {
 }
 
 export function IngredientCard({ match, filters }: IngredientCardProps) {
+  const isUnmatched = match.confidence === 0;
+
+  if (isUnmatched) {
+    return (
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <div className="flex items-center gap-2">
+            <h4 className="card-title">
+              <span className="flex items-center gap-2">
+                <Search className="w-4 h-4 text-muted-foreground" />
+                Unknown ingredient: {match.name}
+              </span>
+            </h4>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            We don't recognize this ingredient. It might be:
+            <ul className="list-disc list-inside mt-2">
+              <li>A typo</li>
+              <li>A trade name</li>
+              <li>Not in our database yet</li>
+            </ul>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const getBadgeColor = (categories: string[] | undefined) => {
     if (!categories) return 'badge-neutral';
 
@@ -61,9 +88,9 @@ export function IngredientCard({ match, filters }: IngredientCardProps) {
                 </div>
               )}
             </div>
-            {isFuzzyMatch && (
+            {isFuzzyMatch && match.details?.name && (
               <p className="text-sm text-muted-foreground">
-                We're {Math.round(match.confidence! * 100)}% confident this is {match.name}
+                We're {Math.round(match.confidence! * 100)}% confident this is {match.details.name}
               </p>
             )}
           </div>

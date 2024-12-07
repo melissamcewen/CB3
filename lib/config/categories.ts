@@ -1,6 +1,7 @@
 export const filterCategories = {
   sulfate: {
     id: 'sulfate',
+    stateKey: 'sulfate',
     label: 'Sulfates',
     warningMessage: 'Contains sulfates',
     matchCategories: ['sulfate'],
@@ -9,6 +10,7 @@ export const filterCategories = {
   },
   'non-soluble-silicone': {
     id: 'non-soluble silicone',
+    stateKey: 'non-soluble silicone',
     label: 'Non-soluble Silicones',
     warningMessage: 'Contains silicones',
     matchCategories: ['non-soluble silicone'],
@@ -42,3 +44,21 @@ export const filterCategories = {
 } as const;
 
 export type FilterCategory = keyof typeof filterCategories;
+
+export const createInitialFilters = () => {
+  return Object.fromEntries(
+    Object.entries(filterCategories).map(([key, config]) => [
+      config.stateKey,
+      true
+    ])
+  );
+};
+
+export const mapFiltersToApi = (filters: Record<string, boolean>) => {
+  return Object.fromEntries(
+    Object.entries(filterCategories).map(([key, config]) => [
+      key,
+      filters[config.stateKey]
+    ])
+  );
+};

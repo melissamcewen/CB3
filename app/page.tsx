@@ -1,27 +1,28 @@
 "use client";
 
 import { useState } from 'react';
-import { AnalysisResult } from 'haircare-ingredients-analyzer';
-import { analyzeIngredients } from '@/lib/analyzer';
+import { analyzeIngredients, AnalysisResult } from '@/lib/curlsbot-api';
+import { ingredients } from '@/lib/data/ingredients';
+import { categories } from '@/lib/data/categories';
 import { Product } from '@/lib/types';
 import { IngredientInput } from '@/components/IngredientAnalyzer/IngredientInput';
 import { FilterOptions } from '@/components/IngredientAnalyzer/FilterOptions';
 import { IngredientResults } from '@/components/IngredientAnalyzer/IngredientResults';
+import { createInitialFilters, mapFiltersToApi } from '@/lib/config/categories';
 
 export default function Home() {
-  const [ingredients, setIngredients] = useState('');
-  const [filters, setFilters] = useState({
-    sulfate: true,
-    'non-soluble silicone': true,
-    'water-soluble silicone': true,
-    'drying alcohol': true,
-    'non-soluble wax': true,
-  });
+  const [ingredientList, setIngredientList] = useState('');
+  const [filters, setFilters] = useState(createInitialFilters());
   const [results, setResults] = useState<AnalysisResult | null>(null);
   const [recommendations, setRecommendations] = useState<Product[]>([]);
 
   const handleAnalysis = () => {
-    const analysis = analyzeIngredients(ingredients, filters);
+    const analysis = analyzeIngredients(
+      ingredientList,
+      mapFiltersToApi(filters),
+      ingredients,
+      categories
+    );
     setResults(analysis);
     setRecommendations([]);
   };
@@ -33,19 +34,19 @@ export default function Home() {
           <h2 className="card-title text-3xl mb-6">Ingredient Analyzer</h2>
 
           <IngredientInput
-            value={ingredients}
-            onChange={setIngredients}
+            value={ingredientList}
+            onChange={setIngredientList}
           />
 
           <FilterOptions
-            filters={filters}
-            onChange={setFilters}
+            filters={mapFiltersToApi(filters)}
+            onChange={newFilters => setFilters(createInitialFilters())}
           />
 
           <button
             className="btn btn-primary"
             onClick={handleAnalysis}
-            disabled={!ingredients.trim()}
+            disabled={!ingredientList.trim()}
           >
             Analyze Ingredients
           </button>
@@ -53,7 +54,7 @@ export default function Home() {
           {results && (
             <IngredientResults
               results={results}
-              filters={filters}
+              filters={mapFiltersToApi(filters)}
               recommendations={recommendations}
             />
           )}
