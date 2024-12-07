@@ -8,13 +8,15 @@ export interface Ingredient {
   link?: string[];
 }
 
-export interface IngredientMatch extends Ingredient {
-  confidence?: number;
-  originalText?: string;
-  matched: boolean;
+export interface IngredientMatch {
+  name: string;
   normalized: string;
-  matchedSynonym?: string;
+  matched: boolean;
+  details: Ingredient | undefined;
   categories?: string[];
+  fuzzyMatch?: boolean;
+  confidence?: number;
+  matchedSynonym?: string;
 }
 
 export interface AnalysisResult {

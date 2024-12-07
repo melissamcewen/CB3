@@ -1,6 +1,7 @@
-import { Analyzer } from '../analyzer';
+import { Analyzer } from '@/lib/curlsbot-api/analyzer';
 import { ingredients } from '@/lib/data/ingredients';
 import { categories } from '@/lib/data/categories';
+import { IngredientMatch } from '../types';
 
 describe('Analyzer', () => {
   const analyzer = new Analyzer({
@@ -112,7 +113,7 @@ describe('Analyzer', () => {
       // check that benzyl alcohol is matched
       expect(results.matches.find(m => m.name === 'Benzyl Alcohol')).not.toBeUndefined();
       // check that propanediol is matched
-      expect(results.matches.find(m => m.name === 'Propanediol')).not.toBeUndefined();
+      expect(results.matches.find((m: IngredientMatch) => m.name === 'Propanediol')).not.toBeUndefined();
     });
 
     test('detect alcohol in a complex ingredient list', () => {
