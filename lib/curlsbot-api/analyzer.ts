@@ -18,7 +18,12 @@ export class Analyzer {
     // Initialize Fuse.js
     const fuseOptions = {
       threshold: 0.5,
-      keys: ['0', '1.name', '1.category'],  // search in key (0) and ingredient name/category (1.*)
+      keys: [
+        '0',                // ingredient key
+        '1.name',          // ingredient name
+        '1.category',      // ingredient categories
+        '1.synonyms'       // ingredient synonyms
+      ],
       includeScore: true
     };
     this.fuse = new Fuse(Object.entries(this.ingredients), fuseOptions);

@@ -126,7 +126,7 @@ describe('Analyzer', () => {
       expect(results.matches.find(m => m.name === 'Propanediol')).not.toBeUndefined();
     });
 
-    test ('detect alcohol in a complex ingredient list', () => {
+    test('detect alcohol in a complex ingredient list', () => {
       const list = "SD Alcohol 40-B (Alcohol Denat.), denatured alcohol (sd alcohol 40)";
       const results = analyzer.analyzeIngredients(list);
       expect(results.categories).toContain('drying alcohol');
