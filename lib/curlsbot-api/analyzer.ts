@@ -32,7 +32,14 @@ export class Analyzer {
   analyzeIngredients(ingredientList: string): AnalysisResult {
     const ingredients = ingredientList
       .split(',')
-      .map(i => i.trim())
+      .flatMap(i => {
+        // Check for parentheses and split into multiple ingredients
+        const matches = i.match(/(.+?)\s*\((.+?)\)/);
+        if (matches) {
+          return [matches[1], matches[2]].map(part => part.trim());
+        }
+        return [i.trim()];
+      })
       .filter(i => i.length > 0);
 
     const matches = ingredients.map(ingredient => {
@@ -78,7 +85,6 @@ export class Analyzer {
 
     if (directMatch) {
       const [key, details] = directMatch;
-      // Find the matched synonym if any
       const matchedSynonym = details.synonyms?.find(syn => syn.toLowerCase() === normalized);
       return {
         ...details,
@@ -90,6 +96,41 @@ export class Analyzer {
         categories: details.category,
         details,
         matchedSynonym: key.toLowerCase() === normalized ? key : matchedSynonym
+      };
+    }
+
+    // Partial match - check if ingredient is part of a category, name, or synonyms
+    const partialMatch = Object.entries(this.ingredients)
+      .find(([key, value]) => {
+        // Check if ingredient is part of a category
+        const categoryMatch = value.category.some(c =>
+          c.toLowerCase().includes(normalized)
+        );
+        // Check if ingredient is part of the name
+        const nameMatch = value.name.toLowerCase().includes(normalized);
+        // Check if ingredient is part of any synonym
+        const synonymMatch = value.synonyms?.some(syn =>
+          syn.toLowerCase().includes(normalized)
+        );
+        return categoryMatch || nameMatch || synonymMatch;
+      });
+
+    if (partialMatch) {
+      const [_, details] = partialMatch;
+      // Find the matching synonym if any
+      const matchedSynonym = details.synonyms?.find(syn =>
+        syn.toLowerCase().includes(normalized)
+      );
+      return {
+        ...details,
+        name: ingredient,
+        confidence: 0.9,
+        matched: true,
+        normalized,
+        fuzzyMatch: false,
+        categories: details.category,
+        details,
+        matchedSynonym: matchedSynonym
       };
     }
 

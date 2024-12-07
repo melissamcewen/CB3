@@ -9,7 +9,6 @@ describe('Ingredient Matcher', () => {
       ingredients: ingredients,
       categories: categories
     },
-    fuzzyMatchThreshold: 0.3
   };
 
   const matcher = createMatcher(config);
@@ -70,6 +69,20 @@ describe('Ingredient Matcher', () => {
         confidence: expect.any(Number),
         matchedSynonym: undefined
       });
+    });
+
+    test ('matches poorly formatted ingredient', () => {
+      const result = matcher('SD Alcohol 40-B (Alcohol Denat.)');
+      expect(result.matched).toBe(true);
+      expect(result.categories).toContain('drying alcohol');
+      expect(result.details?.name).toBe('Alcohol Denat.');
+    });
+
+    test ('matches poorly formatted ingredient', () => {
+      const result = matcher('denatured alcohol (sd alcohol 40)');
+      expect(result.matched).toBe(true);
+      expect(result.categories).toContain('drying alcohol');
+      expect(result.details?.name).toBe('Alcohol Denat.');
     });
 
     test('does not match when confidence is too low', () => {
