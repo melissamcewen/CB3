@@ -48,6 +48,18 @@ describe('Analyzer', () => {
       expect(results.categories).toHaveLength(0);
     });
 
+    test('handles partial matches', () => {
+      const results = analyzer.analyzeIngredients('sulfate, wax');
+      expect(results.matches[0].matched).toBe(true);
+      expect(results.matches[1].matched).toBe(true);
+      expect(results.categories).toContain('sulfate');
+      expect(results.categories).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining('wax')
+        ])
+      );
+    });
+
     test('handles empty input', () => {
       const results = analyzer.analyzeIngredients('');
       expect(results.matches).toHaveLength(0);
@@ -78,6 +90,7 @@ describe('Analyzer', () => {
   });
 
 
+
   describe('complex ingredient lists', () => {
     test('analyzes shampoo ingredients correctly', () => {
       const list = "Water, Sodium Laureth Sulfate, Cocamidopropyl Betaine, Cetyl Alcohol";
@@ -89,12 +102,43 @@ describe('Analyzer', () => {
       expect(results.categories).toContain('fatty alcohol');
     });
 
+    test('analyze a complex shampoo', () => {
+      const list = "Disodium Laureth Sulfosuccinate, Sodium C14-16 Olefin Sulfonate, Cocamidopropyl Betaine, Cocamidopropyl Hydroxysultaine, PEG-12 Dimethicone, Cocamide MIPA, Glycol Distearate,  Panthenol, Polyquaternium-11, DMDM Hydantoin, Sodium Chloride, Cetyl Alcohol, Guar Hydroxypropyltrimonium Chloride, PEG-14M";
+      const results = analyzer.analyzeIngredients(list);
+      expect(results.categories).toContain('sulfate');
+      expect(results.categories).toContain('gentle cleanser');
+      expect(results.categories).toContain('fatty alcohol');
+      expect(results.categories).toContain('water-soluble silicone');
+      // check that peg-12 dimethicone is matched
+      expect(results.matches.find(m => m.name === 'PEG-12 Dimethicone')).not.toBeUndefined();
+    });
+
+    test('analyze a complex hair gel', () => {
+      const list = "PEG/PPG-25/25 Dimethicone, PEG-10 Dimethicone, PEG-4 Dilaurate, PEG-4 Laurate, PEG-4, Phenoxyethanol, Phenylpropanol, Propanediol, Benzyl Alcohol";
+      const results = analyzer.analyzeIngredients(list);
+      expect(results.categories).toContain('water-soluble silicone');
+      expect(results.categories).toContain('preservative alcohol');
+      // check that PEG-25 dimethicone is matched
+      expect(results.matches.find(m => m.name === 'PEG/PPG-25/25 Dimethicone')).not.toBeUndefined();
+      // check that benzyl alcohol is matched
+      expect(results.matches.find(m => m.name === 'Benzyl Alcohol')).not.toBeUndefined();
+      // check that propanediol is matched
+      expect(results.matches.find(m => m.name === 'Propanediol')).not.toBeUndefined();
+    });
+
+    test ('detect alcohol in a complex ingredient list', () => {
+      const list = "SD Alcohol 40-B (Alcohol Denat.), denatured alcohol (sd alcohol 40)";
+      const results = analyzer.analyzeIngredients(list);
+      expect(results.categories).toContain('drying alcohol');
+      expect(results.matches.find(m => m.name === 'alcohol denat')).not.toBeUndefined();
+    });
+
     test('handles ingredient synonyms', () => {
       const list = "SLES, CAPB, Hexadecan-1-ol";
       const results = analyzer.analyzeIngredients(list);
 
-      expect(results.matches[0].matchedSynonym).toBe('sles');
-      expect(results.matches[1].matchedSynonym).toBe('capb');
+      expect(results.matches[0].matchedSynonym).toBe('SLES');
+      expect(results.matches[1].matchedSynonym).toBe('CAPB');
       expect(results.matches[2].matchedSynonym).toBe('hexadecan-1-ol');
     });
   });

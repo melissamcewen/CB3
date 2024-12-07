@@ -1,9 +1,11 @@
+import Fuse from 'fuse.js';
 import { AnalyzerConfig, AnalysisResult, IngredientMatch, Ingredient, CategoryGroups } from './types';
 
 export class Analyzer {
   private ingredients: Record<string, Ingredient>;
   private categories: CategoryGroups;
   private config: { minConfidence: number; fuzzyMatch: boolean };
+  private fuse: Fuse<[string, Ingredient]>;
 
   constructor(config: AnalyzerConfig) {
     this.ingredients = config.database.ingredients;
@@ -12,6 +14,14 @@ export class Analyzer {
       minConfidence: config.config?.minConfidence ?? 0.7,
       fuzzyMatch: config.config?.fuzzyMatch ?? true
     };
+
+    // Initialize Fuse.js
+    const fuseOptions = {
+      threshold: 0.5,
+      keys: ['0', '1.name', '1.category'],  // search in key (0) and ingredient name/category (1.*)
+      includeScore: true
+    };
+    this.fuse = new Fuse(Object.entries(this.ingredients), fuseOptions);
   }
 
   analyzeIngredients(ingredientList: string): AnalysisResult {
@@ -53,18 +63,18 @@ export class Analyzer {
   private findMatch(ingredient: string): IngredientMatch | null {
     const normalized = ingredient.trim().toLowerCase();
 
-    // Direct match - search through all ingredients
+    // Direct match
     const directMatch = Object.entries(this.ingredients)
       .find(([key, value]) => {
-        const keyMatch = key.toLowerCase() === normalized;
-        const nameMatch = value.name.toLowerCase() === normalized;
-        // Also check for compound names (e.g., "Cetyl Alcohol")
-        const compoundMatch = key.toLowerCase().replace(/\s+/g, ' ') === normalized.replace(/\s+/g, ' ');
-        return keyMatch || nameMatch || compoundMatch;
+        // Check main key and synonyms
+        if (key.toLowerCase() === normalized) return true;
+        return value.synonyms?.some(syn => syn.toLowerCase() === normalized);
       });
 
     if (directMatch) {
-      const [_, details] = directMatch;
+      const [key, details] = directMatch;
+      // Find the matched synonym if any
+      const matchedSynonym = details.synonyms?.find(syn => syn.toLowerCase() === normalized);
       return {
         ...details,
         name: ingredient,
@@ -74,48 +84,25 @@ export class Analyzer {
         fuzzyMatch: false,
         categories: details.category,
         details,
-        matchedSynonym: undefined
+        matchedSynonym: key.toLowerCase() === normalized ? key : matchedSynonym
       };
     }
 
-    // Check synonyms
-    for (const [name, details] of Object.entries(this.ingredients)) {
-      const synonymMatch = details.synonyms?.find(s => s.toLowerCase() === normalized);
-      if (synonymMatch) {
-        return {
-          ...details,
-          name: details.name,
-          confidence: 1,
-          matched: true,
-          normalized,
-          fuzzyMatch: false,
-          categories: details.category,
-          details,
-          matchedSynonym: normalized
-        };
-      }
-    }
-
-    // Fuzzy match
-    let bestMatch: IngredientMatch | null = null;
-    let highestConfidence = this.config.minConfidence;
-
-    for (const [name, details] of Object.entries(this.ingredients)) {
-      const confidence = this.calculateConfidence(normalized, name.toLowerCase());
-      if (confidence > highestConfidence) {
-        bestMatch = {
-          ...details,
-          name: ingredient,
-          confidence,
-          matched: true,
-          normalized,
-          fuzzyMatch: true,
-          categories: details.category,
-          details,
-          matchedSynonym: undefined
-        };
-        highestConfidence = confidence;
-      }
+    // Fuzzy match using Fuse.js
+    const results = this.fuse.search(normalized);
+    if (results.length > 0 && results[0].score && results[0].score < 0.7) {
+      const [key, details] = results[0].item;
+      return {
+        ...details,
+        name: ingredient,
+        confidence: 1 - (results[0].score || 0),
+        matched: true,
+        normalized,
+        fuzzyMatch: true,
+        categories: details.category,
+        details,
+        matchedSynonym: undefined
+      };
     }
 
     // Return unmatched ingredient
@@ -130,34 +117,6 @@ export class Analyzer {
       details: undefined,
       matchedSynonym: undefined
     } as IngredientMatch;
-  }
-
-  private calculateConfidence(input: string, target: string): number {
-    const distance = this.levenshteinDistance(input, target);
-    const maxLength = Math.max(input.length, target.length);
-    return 1 - (distance / maxLength);
-  }
-
-  private levenshteinDistance(a: string, b: string): number {
-    const matrix = Array(b.length + 1).fill(null).map(() =>
-      Array(a.length + 1).fill(null)
-    );
-
-    for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
-    for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
-
-    for (let j = 1; j <= b.length; j++) {
-      for (let i = 1; i <= a.length; i++) {
-        const substitutionCost = a[i - 1] === b[j - 1] ? 0 : 1;
-        matrix[j][i] = Math.min(
-          matrix[j][i - 1] + 1,
-          matrix[j - 1][i] + 1,
-          matrix[j - 1][i - 1] + substitutionCost
-        );
-      }
-    }
-
-    return matrix[b.length][a.length];
   }
 
   findIngredientsByCategory(category: string): string[] {

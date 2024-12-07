@@ -44,5 +44,11 @@ export const silicones: Record<string, Ingredient> = {
       "peg-modified dimethicone",
       "dimethicone copolyol"
     ]
-  }// ... other silicones
+  },
+
+  "PEG/PPG-25/25 Dimethicone": {
+    name: "PEG/PPG-25/25 Dimethicone",
+    description: "A water-soluble silicone modified with polyethylene glycol.",
+    category: ["water-soluble silicone"],
+  }
 };
