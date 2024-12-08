@@ -1,4 +1,4 @@
-import { Ingredient } from 'haircare-ingredients-analyzer';
+import { Ingredient } from '@/lib/curlsbot-api/types';
 import { alcohols } from './alcohols';
 import { sulfates } from './sulfates';
 import { silicones } from './silicones';

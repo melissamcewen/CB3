@@ -1,4 +1,4 @@
-import { Ingredient } from 'haircare-ingredients-analyzer';
+import { Ingredient } from '@/lib/curlsbot-api/types';
 
 export const alcohols: Record<string, Ingredient> = {
   // Drying Alcohols

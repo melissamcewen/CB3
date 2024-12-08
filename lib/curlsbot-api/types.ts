@@ -23,3 +23,16 @@ export interface AnalysisResult {
   matches: IngredientMatch[];
   categories: string[];
 }
+
+export interface CategoryGroup {
+  name: string;
+  description: string;
+  categories: Record<string, {
+    name: string;
+    description: string;
+    impact: string;
+    notes: string;
+  }>;
+}
+
+export type CategoryGroups = Record<string, CategoryGroup>;

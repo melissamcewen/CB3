@@ -1,6 +1,6 @@
 import { AlertTriangle, CheckCircle, Info } from 'lucide-react';
-import { AnalysisResult } from 'haircare-ingredients-analyzer';
-import { FilterOptions } from '@/lib/types';
+import type { AnalysisResult } from '@/lib/curlsbot-api/types';
+import type { FilterOptions } from '@/lib/types';
 import { filterCategories } from '@/lib/config/categories';
 
 interface CategorySummaryProps {
@@ -11,7 +11,7 @@ interface CategorySummaryProps {
 export function CategorySummary({ results, filters }: CategorySummaryProps) {
   const findMatches = () => {
     return Object.entries(filterCategories).some(([key, category]) => {
-      if (!filters[key]) return false;
+      if (!filters[key as keyof FilterOptions]) return false;
       return results.matches.some(match =>
         category.matchCategories.some(c =>
           match.categories?.includes(c) &&
@@ -26,7 +26,7 @@ export function CategorySummary({ results, filters }: CategorySummaryProps) {
   const getMatchedCategories = () => {
     return Object.entries(filterCategories)
       .filter(([key, category]) => {
-        if (!filters[key]) return false;
+        if (!filters[key as keyof FilterOptions]) return false;
         return results.matches.some(match =>
           category.matchCategories.some(c =>
             match.categories?.includes(c) &&

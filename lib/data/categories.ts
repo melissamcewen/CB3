@@ -1,4 +1,5 @@
-import { CategoryGroups } from 'haircare-ingredients-analyzer';
+import { CategoryGroups } from '@/lib/curlsbot-api/types';
+
 
 
 

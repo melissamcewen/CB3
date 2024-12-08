@@ -12,7 +12,9 @@
     "debug": "NODE_OPTIONS='--inspect' next dev",
     "debug:test": "node --inspect-brk node_modules/.bin/jest --runInBand --watchAll=false",
     "test-api": "jest --testPathPattern=lib/curlsbot-api",
-    "test-analyzer": "jest --testPathPattern=lib/curlsbot-api/__tests__/analyzer.test.ts"
+    "test-analyzer": "jest --testPathPattern=lib/curlsbot-api/__tests__/analyzer.test.ts",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch"
   },
   "dependencies": {
     "@next/swc-wasm-nodejs": "15.0.4",

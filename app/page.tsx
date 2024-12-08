@@ -37,10 +37,9 @@ export default function Home() {
             value={ingredientList}
             onChange={setIngredientList}
           />
-
           <FilterOptions
-            filters={mapFiltersToApi(filters)}
-            onChange={newFilters => setFilters(createInitialFilters())}
+            filters={filters}
+            onChange={newFilters => setFilters(newFilters)}
           />
 
           <button
@@ -54,7 +53,7 @@ export default function Home() {
           {results && (
             <IngredientResults
               results={results}
-              filters={mapFiltersToApi(filters)}
+              filters={filters}
               recommendations={recommendations}
             />
           )}

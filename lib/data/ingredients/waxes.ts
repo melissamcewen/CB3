@@ -1,4 +1,4 @@
-import { Ingredient } from 'haircare-ingredients-analyzer';
+import { Ingredient } from '@/lib/curlsbot-api/types';
 
 export const waxes: Record<string, Ingredient> = {
   "beeswax": {

@@ -1,4 +1,4 @@
-import { FilterOptions } from "@/lib/types";
+import type { FilterOptions } from '@/lib/types';
 import { filterCategories } from "@/lib/config/categories";
 
 interface FilterOptionsProps {
@@ -14,7 +14,7 @@ export function FilterOptions({ filters, onChange }: FilterOptionsProps) {
           <input
             type="checkbox"
             className="checkbox checkbox-primary mr-2"
-            checked={filters[key]}
+            checked={filters[key as keyof FilterOptions]}
             onChange={(e) => onChange({ ...filters, [key]: e.target.checked })}
           />
           <span className="label-text">{category.label}</span>

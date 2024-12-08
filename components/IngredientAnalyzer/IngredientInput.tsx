@@ -11,11 +11,11 @@ export function IngredientInput({ value, onChange }: IngredientInputProps) {
       <label className="label">
         <span className="label-text">Paste your ingredients list</span>
       </label>
-      <textarea
-        className="textarea textarea-bordered h-32"
+      <Textarea
         placeholder="Enter ingredients separated by commas..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        className="h-32"
       />
     </div>
   );

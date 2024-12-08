@@ -1,5 +1,5 @@
-import { AnalysisResult } from 'haircare-ingredients-analyzer';
-import { FilterOptions } from '@/lib/types';
+import type { AnalysisResult } from '@/lib/curlsbot-api/types';
+import type { FilterOptions } from '@/lib/types';
 import { CategorySummary } from './CategorySummary';
 import { Product } from '@/lib/types';
 import ProductCard from '@/components/ProductCard';
