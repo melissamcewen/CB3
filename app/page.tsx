@@ -23,6 +23,7 @@ export default function Home() {
       ingredients,
       categories
     );
+    console.log(analysis);
     setResults(analysis);
     setRecommendations([]);
   };

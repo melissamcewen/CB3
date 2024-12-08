@@ -14,7 +14,9 @@
     "test-api": "jest --testPathPattern=lib/curlsbot-api",
     "test-analyzer": "jest --testPathPattern=lib/curlsbot-api/__tests__/analyzer.test.ts",
     "type-check": "tsc --noEmit",
-    "type-check:watch": "tsc --noEmit --watch"
+    "type-check:watch": "tsc --noEmit --watch",
+    "build:lib": "tsc --project lib/curlsbot-api/tsconfig.json",
+    "dev:lib": "tsc --project lib/curlsbot-api/tsconfig.json --watch"
   },
   "dependencies": {
     "@next/swc-wasm-nodejs": "15.0.4",

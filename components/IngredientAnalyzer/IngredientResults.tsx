@@ -14,37 +14,31 @@ interface IngredientResultsProps {
 
 export function IngredientResults({ results, filters, recommendations }: IngredientResultsProps) {
   const groupIngredientsByCategory = (matches: any[]) => {
-    const groups = {
-      sulfates: matches.filter(m =>
-        m.categories?.includes('sulfate') &&
-        (m.confidence ?? 1) >= filterCategories.sulfate.minConfidence
-      ),
-      silicones: matches.filter(m =>
-        (m.categories?.includes('non-soluble silicone') &&
-         (m.confidence ?? 1) >= filterCategories['non-soluble-silicone'].minConfidence) ||
-        (m.categories?.includes('water-soluble silicone') &&
-         (m.confidence ?? 1) >= filterCategories['water-soluble-silicone'].minConfidence)
-      ),
-      alcohols: matches.filter(m =>
-        m.categories?.includes('drying alcohol') ||
-        m.categories?.includes('fatty alcohol')
-      ),
-      waxes: matches.filter(m =>
-        m.categories?.includes('non-soluble wax') ||
-        m.categories?.includes('emulsifying wax')
-      ),
-      other: matches.filter(m =>
-        !m.categories?.some((c: string) =>
-          ['sulfate', 'non-soluble silicone', 'water-soluble silicone',
-           'drying alcohol', 'fatty alcohol', 'non-soluble wax',
-           'emulsifying wax'].includes(c)
+    const groups = Object.entries(filterCategories).reduce((acc, [key, category]) => {
+      const matchesInCategory = matches.filter(m =>
+        category.matchCategories.some(c =>
+          m.categories?.includes(c) &&
+          (m.confidence ?? 1) >= category.minConfidence
         )
-      )
-    };
+      );
 
-    return Object.fromEntries(
-      Object.entries(groups).filter(([_, matches]) => matches.length > 0)
+      if (matchesInCategory.length > 0) {
+        acc[category.label] = matchesInCategory;
+      }
+      return acc;
+    }, {} as Record<string, typeof matches>);
+
+    // Add uncategorized ingredients
+    const categorizedIngredients = new Set(
+      Object.values(groups).flat().map(m => m.name)
     );
+
+    const uncategorized = matches.filter(m => !categorizedIngredients.has(m.name));
+    if (uncategorized.length > 0) {
+      groups['Other'] = uncategorized;
+    }
+
+    return groups;
   };
 
   return (

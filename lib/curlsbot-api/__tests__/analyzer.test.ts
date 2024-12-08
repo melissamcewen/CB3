@@ -40,6 +40,11 @@ describe('Analyzer', () => {
       expect(results.matches[0].matchedSynonym).toBe('potassium hydrate');
     });
 
+    test('handles ingredient synonyms', () => {
+      const results = analyzer.analyzeIngredients('Propane');
+      expect(results.matches[0].matchedSynonym).toBe('amino-2-methyl-1-propanol');
+    });
+
 
     test('handles unknown ingredients', () => {
       const results = analyzer.analyzeIngredients('Unknown Ingredient');
@@ -131,6 +136,76 @@ describe('Analyzer', () => {
       expect(results.matches[0].matchedSynonym).toBe('SLES');
       expect(results.matches[1].matchedSynonym).toBe('CAPB');
       expect(results.matches[2].matchedSynonym).toBe('hexadecan-1-ol');
+    });
+  });
+
+  describe('fuzzy synonym matching', () => {
+    test('matches misspelled synonyms', () => {
+      const results = analyzer.analyzeIngredients('sles');  // common synonym for Sodium Laureth Sulfate
+      expect(results.matches[0].matched).toBe(true);
+      expect(results.matches[0].matchedSynonym).toBe('SLES');
+      expect(results.matches[0].details?.name).toBe('Sodium Laureth Sulfate');
+    });
+
+    test('matches slightly misspelled synonyms', () => {
+      const results = analyzer.analyzeIngredients('slles');  // misspelled SLES
+      expect(results.matches[0].matched).toBe(true);
+      expect(results.matches[0].matchedSynonym).toBe('SLES');
+      expect(results.matches[0].confidence).toBeLessThan(1);
+      expect(results.matches[0].fuzzyMatch).toBe(true);
+    });
+
+    test('does not match very different synonyms', () => {
+      const results = analyzer.analyzeIngredients('completely wrong');
+      expect(results.matches[0].matched).toBe(false);
+      expect(results.matches[0].matchedSynonym).toBeUndefined();
+    });
+  });
+
+  describe('category confidence thresholds', () => {
+    test('only includes high confidence matches in categories', () => {
+      const results = analyzer.analyzeIngredients('cetyl alchol, sodium laureth sulfat');  // misspelled ingredients
+
+      // First ingredient should be matched with lower confidence
+      expect(results.matches[0].confidence).toBeLessThan(1);
+      expect(results.matches[0].categories).toContain('fatty alcohol');
+
+      // Second ingredient should be matched with lower confidence
+      expect(results.matches[1].confidence).toBeLessThan(1);
+      expect(results.matches[1].categories).toContain('sulfate');
+
+      // But categories should only include high confidence matches
+      expect(results.categories.length).toBeLessThan(
+        results.matches.reduce((acc, m) => acc + (m.categories?.length || 0), 0)
+      );
+    });
+
+    test('includes exact matches in categories regardless of confidence', () => {
+      const results = analyzer.analyzeIngredients('Cetyl Alcohol');
+      expect(results.matches[0].confidence).toBe(1);
+      expect(results.categories).toContain('fatty alcohol');
+    });
+
+    test.only('excludes low confidence matches from categories', () => {
+      // Create analyzer with high confidence threshold
+      const strictAnalyzer = new Analyzer({
+        database: {
+          ingredients,
+          categories
+        },
+        config: {
+          minConfidence: 0.9,  // Very strict
+          fuzzyMatch: true
+        }
+      });
+
+      const results = strictAnalyzer.analyzeIngredients('cetarerwerweereyl alchol');  // misspelled
+
+      // Should still match the ingredient
+      expect(results.matches[0].matched).toBe(true);
+      expect(results.matches[0].details?.name).toBe('Cetearyl Alcohol');
+      // But not include it in categories due to low confidence
+      expect(results.categories).not.toContain('fatty alcohol');
     });
   });
 });

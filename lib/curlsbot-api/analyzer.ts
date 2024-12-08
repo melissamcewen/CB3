@@ -19,12 +19,12 @@ export class Analyzer {
     const fuseOptions = {
       threshold: 0.5,
       keys: [
-        '0',                // ingredient key
-        '1.name',          // ingredient name
-        '1.category',      // ingredient categories
+        '1.name',          // ingredient nam
         '1.synonyms'       // ingredient synonyms
       ],
-      includeScore: true
+  //    ignoreLocation: true,
+      includeScore: true,
+ //     ignoreFieldNorm: true
     };
     this.fuse = new Fuse(Object.entries(this.ingredients), fuseOptions);
   }
@@ -67,7 +67,10 @@ export class Analyzer {
   private extractCategories(matches: IngredientMatch[]): string[] {
     const categories = new Set<string>();
     matches.forEach(match => {
-      match.categories?.forEach(category => categories.add(category));
+      // Only add categories from matches that meet confidence threshold
+      if (match.confidence !== undefined && match.confidence >= this.config.minConfidence) {
+        match.categories?.forEach(category => categories.add(category));
+      }
     });
     return Array.from(categories);
   }
@@ -99,55 +102,30 @@ export class Analyzer {
       };
     }
 
-    // Partial match - check if ingredient is part of a category, name, or synonyms
-    const partialMatch = Object.entries(this.ingredients)
-      .find(([key, value]) => {
-        // Check if ingredient is part of a category
-        const categoryMatch = value.category.some(c =>
-          c.toLowerCase().includes(normalized)
-        );
-        // Check if ingredient is part of the name
-        const nameMatch = value.name.toLowerCase().includes(normalized);
-        // Check if ingredient is part of any synonym
-        const synonymMatch = value.synonyms?.some(syn =>
-          syn.toLowerCase().includes(normalized)
-        );
-        return categoryMatch || nameMatch || synonymMatch;
-      });
-
-    if (partialMatch) {
-      const [_, details] = partialMatch;
-      // Find the matching synonym if any
-      const matchedSynonym = details.synonyms?.find(syn =>
-        syn.toLowerCase().includes(normalized)
-      );
-      return {
-        ...details,
-        name: ingredient,
-        confidence: 0.9,
-        matched: true,
-        normalized,
-        fuzzyMatch: false,
-        categories: details.category,
-        details,
-        matchedSynonym: matchedSynonym
-      };
-    }
-
     // Fuzzy match using Fuse.js
     const results = this.fuse.search(normalized);
-    if (results.length > 0 && results[0].score && results[0].score < 0.7) {
+    if (results.length > 0 && results[0].score !== undefined) {
       const [key, details] = results[0].item;
+      // Fuse.js score is between 0 and 1, with 0 being a perfect match and 1 being no match
+      const confidence = 1 - results[0].score;
+
+      // Check if we matched on a synonym
+      const matchedSynonym = details.synonyms?.find(syn => {
+        const fuseResult = this.fuse.search(syn)[0];
+        return fuseResult;
+      });
+
       return {
         ...details,
         name: ingredient,
-        confidence: 1 - (results[0].score || 0),
+        confidence,
         matched: true,
         normalized,
         fuzzyMatch: true,
-        categories: details.category,
+        // Only include categories if confidence meets threshold
+        categories: confidence >= this.config.minConfidence ? details.category : [],
         details,
-        matchedSynonym: undefined
+        matchedSynonym: matchedSynonym || undefined
       };
     }
 

@@ -90,7 +90,10 @@ export function IngredientCard({ match, filters }: IngredientCardProps) {
             </div>
             {isFuzzyMatch && match.details?.name && (
               <p className="text-sm text-muted-foreground">
-                We're {Math.round(match.confidence! * 100)}% confident this is {match.details.name}
+                We're {Math.round(match.confidence! * 100)}% confident this is
+                {match.matchedSynonym
+                  ? ` a synonym of ${match.matchedSynonym}`
+                  : ` ${match.details.name}`}
               </p>
             )}
           </div>
